@@ -1,0 +1,49 @@
+[tool.black]
+line-length = 100
+skip-string-normalization = false
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+include_trailing_comma = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "strict"
+asyncio_default_fixture_loop_scope = "function"
+
+
+[tool.poetry]
+name = "App-Starter"
+version = "0.1.0"
+description = ""
+authors = ["Javicle <supergamer.08.2006@gmail.com>"]
+readme = "README.md"
+
+packages = [
+    { include = "openverse_applaunch" }
+]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = "^0.115.6"
+pydantic = {extras = ["email"], version = "^2.10.4"}
+sqlalchemy = "^2.0.37"
+redis = "^5.2.1"
+uvicorn = "^0.34.0"
+pydantic-settings = "^2.0.3"
+tools-openverse = {git = "https://github.com/Javicle/_ToolsOpenVerse.git"}
+asyncpg = "^0.30.0"
+pytest = "^8.3.4"
+python-multipart = "^0.0.20"
+opentelemetry-instrumentation-fastapi = "^0.51b0"
+opentelemetry-sdk = "^1.30.0"
+opentelemetry-exporter-otlp-proto-http = "^1.30.0"
+rich = "^13.9.4"
+httpx = "^0.28.1"
+pytest-asyncio = "^0.25.3"
+pytest-cov = "^6.0.0"
+dependency-injector = "^4.45.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
