@@ -1,0 +1,2 @@
+DEFAULT = 'default'
+CENTER = 'center'

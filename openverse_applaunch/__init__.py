@@ -1,3 +1,13 @@
-from openverse_applaunch.main import ApplicationManager
+"""
+OpenVerse AppLaunch - библиотека для запуска и мониторинга FastAPI приложений.
+"""
 
-__all__ = ["ApplicationManager"]
+from openverse_applaunch.main import ApplicationManager
+from openverse_applaunch.objects.models.health import ServiceStatus
+from openverse_applaunch.objects.services import JaegerService
+
+__all__ = [
+    "ApplicationManager",
+    'ServiceStatus',
+    'JaegerService'
+]

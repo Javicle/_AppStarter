@@ -48,3 +48,11 @@ class LifeCycleManagerError(ManagerBaseException):
 
 class ApplicationNotInitializedError(LifeCycleManagerError):
     """Приложение не инициализировано"""
+
+
+class OpenTelemetryError(Exception):
+    """Отсутствует установленный OpenTelemetry"""
+
+
+class TableError(Exception):
+    "Exception for some error associated with table"
