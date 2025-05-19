@@ -67,7 +67,7 @@ class MetricsManager:
 
         Raises:
             ServiceNotFoundError: If the service with the given name doesn't exist.
-            
+
         Example:
             ```python
             # Get a specific metrics service
@@ -87,7 +87,7 @@ class MetricsManager:
 
         Raises:
             ServiceNotFoundError: If the service with the given name doesn't exist.
-            
+
         Example:
             ```python
             # Remove a metrics service

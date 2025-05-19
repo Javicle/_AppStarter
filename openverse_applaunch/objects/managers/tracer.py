@@ -47,7 +47,7 @@ class TracerManager:
 
         Raises:
             TracerAlreadyExistsError: If a tracer with the same name already exists.
- 
+
         Example:
             ```python
             # Create and add a tracer service

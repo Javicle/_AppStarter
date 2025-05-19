@@ -26,4 +26,3 @@ class MainTableCreater(ITableCreator):
         table.add_column("Parameter", style="cyan", justify="right")
         table.add_column("Value", style="green")
         return table
-

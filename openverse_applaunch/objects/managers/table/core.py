@@ -122,6 +122,9 @@ class TableManager:
             table_render.populate_table(table=table)
         return table
 
+    def print_console(self, text: str, style: Style) -> None:
+        self.console.print(text, style=style)
+
     def display_tables(self, storage: StorageVars,
                        output: bool = False) -> dict[str, Table] | str:
 
@@ -169,5 +172,3 @@ class TableManager:
         if not self.utils_manager.table_creators_registry[name]:
             raise TableError(f'Not found class TableCreator with {name}')
 
-    def print_console(self, text: str, style: Style) -> None:
-        self.console.print(text, style=style)

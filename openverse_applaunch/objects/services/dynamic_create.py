@@ -54,8 +54,7 @@ def execute_dynamic_func(function: FuncType,
     var_kwargs: dict[str, Any] = {}
 
     sig = inspect.signature(function)
-    
-    # Отдельно обрабатываем VAR_KEYWORD параметры
+
     for name, value in available_args.items():
         if name not in sig.parameters:
             var_kwargs[name] = value
