@@ -30,6 +30,9 @@ from openverse_applaunch.objects.managers import (
 from openverse_applaunch.objects.managers.table.storage import StorageVars
 
 
+_container = Container()
+
+
 class ApplicationManager:
     """
     Main class for managing a FastAPI application.
@@ -121,6 +124,9 @@ class ApplicationManager:
                 lifespan=None
             )
         """
+
+        _container.config.service_name.from_value(service_name)
+        _container.wire(modules=[cls.__name__])
         return cls(service_name=service_name, lifespan=lifespan)
 
     async def __aenter__(self) -> "ApplicationManager":
