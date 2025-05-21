@@ -27,15 +27,18 @@ class Container(containers.DeclarativeContainer):
     metrics_manager = providers.Singleton(MetricsManager, console=console)
 
     tracer_manager: providers.Singleton[TracerManager] = providers.Singleton(
-        TracerManager, console=console
+        TracerManager
     )
 
     health_manager: providers.Singleton[
         HealthManager
     ] = providers.Singleton(HealthManager)
 
+    utils_manager = providers.Singleton(UtilsManager)
+
     table_manager = providers.Singleton(
-        TableManager, service_name=config.service_name, console=console
+        TableManager, service_name=config.service_name,
+        console=console, utils_manager=utils_manager
     )
 
     lifecycle_manager = providers.Singleton(
@@ -43,4 +46,4 @@ class Container(containers.DeclarativeContainer):
     )
 
     storage = providers.Singleton(StorageVars)
-    utils_manager = providers.Singleton(UtilsManager)
+

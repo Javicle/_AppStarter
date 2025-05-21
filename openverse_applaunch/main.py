@@ -65,6 +65,8 @@ class ApplicationManager:
         self,
         service_name: str,
         lifespan: Callable[[FastAPI], AsyncContextManager[None]] | None = None,
+        *,
+        _allow_direct: bool = False,
         table_manager: TableManager = Provide[Container.table_manager],
         tracer_manager: TracerManager = Provide[Container.tracer_manager],
         health_manager: HealthManager = Provide[Container.health_manager],
@@ -89,6 +91,12 @@ class ApplicationManager:
             lifecycle_manager: Manager for FastAPI app lifecycle (injected).
             metrics_manager: Manager for metrics services (injected).
         """
+
+        if not _allow_direct:
+            raise ValueError(
+                "Cannot be created ApplicationManager() directly"
+                "Please use ApllicationManager.create"
+            )
         self.app: FastAPI | None = None
         self._lifespan = lifespan
         self.service_name: str = service_name
@@ -124,10 +132,14 @@ class ApplicationManager:
                 lifespan=None
             )
         """
-
         _container.config.service_name.from_value(service_name)
-        _container.wire(modules=[cls.__name__])
-        return cls(service_name=service_name, lifespan=lifespan)
+        _container.wire(modules=[__name__])
+
+        return cls(
+            service_name=service_name,
+            lifespan=lifespan,
+            _allow_direct=True
+        )
 
     async def __aenter__(self) -> "ApplicationManager":
         """

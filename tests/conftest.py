@@ -48,7 +48,7 @@ class MockTestService(AbstractTracerService[HealthCheckResult]):
         )
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(autouse=False)
 def container() -> Container:
     container_ = Container()
     container_.config.from_dict(

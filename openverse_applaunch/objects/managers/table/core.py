@@ -171,4 +171,3 @@ class TableManager:
             raise TableError(f"Not found class TableConfig with {name}")
         if not self.utils_manager.table_creators_registry[name]:
             raise TableError(f'Not found class TableCreator with {name}')
-
