@@ -11,7 +11,3 @@ async def test_modules(container: Container) -> None:
 
     assert storage['health_dict'] == health_dict
 
-
-@pytest.mark.asyncio
-async def test_check_config() -> None:
-    ...

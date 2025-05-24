@@ -10,8 +10,7 @@ async def test_app() -> None:
         "vers": "0,0,1",
         "Name": "TEST"
     }, with_metrics=False, with_tracers=False, health_check=False)
-    
-    
+
 @pytest.mark.asyncio
 async def test_exception() -> None:
     with pytest.raises(ValueError):

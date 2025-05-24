@@ -21,7 +21,7 @@ from openverse_applaunch.objects.services.dynamic_create import execute_dynamic_
 @dataclass()
 class UtilsManager:
     """
-    Realize convient methods table managers
+    Realize convenient methods for table managers
     """
     table_creators_registry: ClassVar[
         MutableMapping[str, ITableCreator]
@@ -54,23 +54,39 @@ class UtilsManager:
     def add(self, name: str, table_obj: (
         ITableCreator | TableConfigProtocol | ITableRender
     )) -> None:
-        try:
-            if isinstance(table_obj, ITableCreator):
-                self.table_creators_registry[name] = table_obj
-            elif isinstance(table_obj, ITableRender):
-                self.table_renders_registry[name] = table_obj
-            else:
-                self.table_config_settings_registry[name] = table_obj
-        except KeyError as exc:
-            raise TableError(f'Object with name: {name} has exists : {exc}')
+        if (
+            name in self.table_creators_registry or 
+            name in self.table_renders_registry or
+            name in self.table_config_settings_registry
+        ):
+            raise TableError(f'Object with name: {name} already exists')
+
+        if isinstance(table_obj, ITableCreator):
+            self.table_creators_registry[name] = table_obj
+        elif isinstance(table_obj, ITableRender):
+            self.table_renders_registry[name] = table_obj
+        elif isinstance(table_obj, TableConfigProtocol):
+            self.table_config_settings_registry[name] = table_obj
+        else:
+            raise TableError(f'Unknown object type for: {name}')
 
     def remove(self, name: str) -> None:
-        try:
-            del self.table_config_settings_registry[name]
+        removed_any = False
+
+        if name in self.table_creators_registry:
             del self.table_creators_registry[name]
+            removed_any = True
+
+        if name in self.table_renders_registry:
             del self.table_renders_registry[name]
-        except KeyError as exc:
-            raise TableError(f'Table with name: {name} has not delete: {exc}')
+            removed_any = True
+
+        if name in self.table_config_settings_registry:
+            del self.table_config_settings_registry[name]
+            removed_any = True
+
+        if not removed_any:
+            raise TableError(f'Table with name: {name} not found')
 
     def __str__(self) -> str:
         return str({
@@ -88,8 +104,7 @@ class TableManager:
     """
 
     def __init__(
-        self, service_name: str,
-        console: Console,
+        self, console: Console,
         utils_manager: UtilsManager,
     ) -> None:
         """
@@ -98,39 +113,49 @@ class TableManager:
         Args:
             service_name: Имя сервиса для отображения в таблицах
             console: Консоль для вывода таблиц
+            utils_manager: Менеджер утилит для работы с таблицами
         """
-        self.service_name = service_name
         self.console = console
         self.utils_manager = utils_manager
 
     def register_service(
-        self, name: str, object: ITableRender | ITableCreator | TableConfigProtocol
+        self, name: str, some_obj: ITableRender | ITableCreator | TableConfigProtocol
     ) -> None:
-        self.utils_manager.add(name=name, table_obj=object)
+        """Регистрирует сервис в менеджере утилит."""
+        self.utils_manager.add(name=name, table_obj=some_obj)
 
     def remove_service(self, name: str) -> None:
+        """Удаляет сервис из менеджера утилит."""
         self.utils_manager.remove(name=name)
 
-    def create_table(self, table_name: str, table_data: dict[str, Any]) -> Table:
-
+    def create_table(self, table_name: str,
+                     table_data: dict[str, Any] | None = None) -> Table:
+        """Создает таблицу с указанным именем и данными."""
         self._validate_table_components(table_name)
         table_creator = self.utils_manager.get_creator(name=table_name)
         table_render = self.utils_manager.get_render(name=table_name)
         table_config = self.utils_manager.get_config(table_name)
+
         table = table_creator.create_table(table_config=table_config)
+
         if table_data:
-            table_render.populate_table(table=table)
+            # Передаем данные в render для заполнения таблицы
+            table_render.populate_table(table=table, data=table_data)
+
         return table
 
     def print_console(self, text: str, style: Style) -> None:
+        """Выводит текст в консоль с указанным стилем."""
         self.console.print(text, style=style)
 
     def display_tables(self, storage: StorageVars,
                        output: bool = False) -> dict[str, Table] | str:
-
+        """Отображает все зарегистрированные таблицы."""
         tables: dict[str, Table] = {}
-        for name, table_creator in self.utils_manager.table_creators_registry.items():
+
+        for name in self.utils_manager.table_creators_registry.keys():
             self._validate_table_components(name=name)
+            table_creator = self.utils_manager.get_creator(name)
             table = self._create_populate_table(
                 name=name,
                 table_creator=table_creator,
@@ -140,34 +165,46 @@ class TableManager:
 
         if output:
             with self.console.capture() as capture:
-                self.console.print(table for table in tables)
-            output_value = capture.get()
-            return output_value
+                for table in tables.values():
+                    self.console.print(table)
+            return capture.get()
         else:
+            for table in tables.values():
+                print(f'Table: {table.title}')
+                self.console.print(table)
             return tables
 
     def _create_populate_table(self, name: str, storage: StorageVars,
                                table_creator: ITableCreator) -> Table:
+        """Создает и заполняет таблицу данными."""
         creator_table = table_creator.create_table(
             table_config=self.utils_manager.get_config(name)
         )
         render_table = self.utils_manager.get_render(name)
         storage[name] = creator_table
-        execute_dynamic_func(function=render_table.populate_table,
-                             available_args=storage)
+
+        execute_dynamic_func(
+            function=render_table.populate_table,
+            available_args=storage
+        )
         return creator_table
 
     def _validate_registries(self) -> None:
+        """Проверяет, что все необходимые реестры заполнены."""
         if not self.utils_manager.table_creators_registry:
             raise TableError("No classes TableCreating were added")
 
         if not self.utils_manager.table_renders_registry:
             raise TableError("No classes TableRendering were added")
+        
+        if not self.utils_manager.table_config_settings_registry:
+            raise TableError("No classes TableConfig were added")
 
     def _validate_table_components(self, name: str) -> None:
-        if not self.utils_manager.table_renders_registry[name]:
+        """Проверяет наличие всех компонентов таблицы с указанным именем."""
+        if name not in self.utils_manager.table_renders_registry:
             raise TableError(f"Not found class TableRender with {name}")
-        if not self.utils_manager.table_config_settings_registry[name]:
+        if name not in self.utils_manager.table_config_settings_registry:
             raise TableError(f"Not found class TableConfig with {name}")
-        if not self.utils_manager.table_creators_registry[name]:
+        if name not in self.utils_manager.table_creators_registry:
             raise TableError(f'Not found class TableCreator with {name}')

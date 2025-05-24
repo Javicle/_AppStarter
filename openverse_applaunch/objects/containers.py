@@ -37,8 +37,7 @@ class Container(containers.DeclarativeContainer):
     utils_manager = providers.Singleton(UtilsManager)
 
     table_manager = providers.Singleton(
-        TableManager, service_name=config.service_name,
-        console=console, utils_manager=utils_manager
+        TableManager, console=console, utils_manager=utils_manager
     )
 
     lifecycle_manager = providers.Singleton(

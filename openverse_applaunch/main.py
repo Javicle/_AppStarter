@@ -6,6 +6,7 @@ import asyncio
 from types import TracebackType
 from typing import Any, AsyncContextManager, Callable
 
+
 from dependency_injector.wiring import Provide, inject
 from fastapi import FastAPI
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor  # type:ignore
@@ -14,7 +15,6 @@ from rich.style import Style
 from openverse_applaunch.objects.abc.service import AbstractTracerService
 from openverse_applaunch.objects.containers import Container
 from openverse_applaunch.objects.exceptions import (
-    ApplicationNotInitializedError,
     ServiceAlreadyExistsError,
     ServiceNotFoundError,
     TracerAlreadyExistsError,
@@ -106,6 +106,9 @@ class ApplicationManager:
         self._lifecycle_manager = lifecycle_manager
         self._metrics_manager = metrics_manager
         self._initialized: bool = False
+
+        if self._lifespan:
+            self._lifecycle_manager.lifespan = self._lifespan
 
     @classmethod
     def create(
@@ -314,40 +317,6 @@ class ApplicationManager:
         if self.app is None:
             raise ValueError("Application not initialized")
         return self.app
-
-    def run(self, host: str, port: int, reload: bool) -> None:
-        """
-        Start the FastAPI application with Uvicorn.
-
-        This method prints a startup message and then calls `uvicorn.run`.
-        It requires that `initialize_application` has already been called.
-
-        Args:
-            host: Host address (e.g., "127.0.0.1").
-            port: Port number (e.g., 8000).
-            reload: If True, enable auto-reload on code changes.
-
-        Raises:
-            ApplicationNotInitializedError: If `.initialize_application` was
-                not called successfully before `.run`.
-        """
-        if not self._initialized:
-            raise ApplicationNotInitializedError(
-                "Application is not initialized."
-            )
-
-        import uvicorn
-
-        self._table_manager.print_console(
-            f"Starting application at http://{host}:{port}",
-            style=Style(bold=True, color="red"),
-        )
-        uvicorn.run(
-            app=f"{self.__module__}:app",
-            host=host,
-            port=port,
-            reload=reload,
-        )
 
     async def __with_tracers(self) -> None:
         """
