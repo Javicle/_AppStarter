@@ -5,7 +5,8 @@
 from dataclasses import dataclass, field
 from typing import Optional
 
-from rich.box import ROUNDED, DOUBLE, Box
+from rich.box import DOUBLE, ROUNDED, Box
+
 from openverse_applaunch.objects.abc.interfaces import TableConfigProtocol
 from openverse_applaunch.objects.managers.table.registry import register_table_config
 

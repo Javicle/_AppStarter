@@ -27,23 +27,23 @@ class _BaseHealthResult:
 class HealthyResult(_BaseHealthResult, HealthyResultProtocol):
     response_time: float
     message: str = "Service is healthy"
-    status: ServiceStatus = ServiceStatus.HEALTHY
     details: dict[str, Any] = field(default_factory=dict)
+    status: ServiceStatus = ServiceStatus.HEALTHY
 
 
 @dataclass(kw_only=True)
 class UnhealthyResult(_BaseHealthResult, UnhealthyResultProtocol):
     response_time: float
     message: str = "Service is unhealthy"
-    status: ServiceStatus = ServiceStatus.UNHEALTHY
     details: dict[str, Any] = field(default_factory=dict)
+    status: ServiceStatus = ServiceStatus.UNHEALTHY
 
 
 @dataclass(kw_only=True)
 class UnknownResult(_BaseHealthResult, UnknownResultProtocol):
     message: str = "Service health is unknown"
-    status: ServiceStatus = ServiceStatus.UNKNOWN
     details: dict[str, Any] = field(default_factory=dict)
+    status: ServiceStatus = ServiceStatus.UNKNOWN
 
 
 HealthCheckResult: TypeAlias = HealthyResult | UnhealthyResult | UnknownResult

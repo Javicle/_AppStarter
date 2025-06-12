@@ -35,8 +35,9 @@ class AbstractTracerService(abc.ABC, Generic[THeatlhResult]):
     Определяет общий интерфейс для всех сервисов трассировки в системе.
     """
 
-    service_name: str = "base_service"
-    _initialized: bool = False
+    def __init__(self) -> None:
+        self.service_name: str = "base_service"
+        self._initialized: bool = False
 
     @abc.abstractmethod
     async def init(self, *args: Any, **kwargs: Any) -> None:
@@ -47,7 +48,7 @@ class AbstractTracerService(abc.ABC, Generic[THeatlhResult]):
             *args: Произвольные позиционные аргументы
             **kwargs: Произвольные именованные аргументы
         """
-        type(self)._initialized = True
+        self._initialized = True
 
     @abc.abstractmethod
     async def clean(self, *args: Any, **kwargs: Any) -> None:

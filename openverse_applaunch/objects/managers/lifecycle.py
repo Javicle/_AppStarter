@@ -1,9 +1,13 @@
 """
-Application lifecycle manager.
+Application lifecycle manager with logging.
 """
+
 from contextlib import asynccontextmanager
 from typing import AsyncContextManager, AsyncIterator, Callable, Optional
+
 from fastapi import FastAPI
+from tools_openverse import setup_logger
+
 from openverse_applaunch.objects.types import Sentinal
 
 
@@ -15,6 +19,7 @@ class LifeCycleManager:
     Attributes:
         service_name (str): Name of the service.
         lifespan (Optional[Callable]): FastAPI application lifecycle function.
+        logger (logging.Logger): Logger instance for this manager.
     """
 
     def __init__(
@@ -31,6 +36,14 @@ class LifeCycleManager:
         """
         self.lifespan = lifespan
         self.service_name = service_name
+        self.logger = setup_logger(f"{__name__}.{self.__class__.__name__}")
+
+        self.logger.info(f"Lifecycle manager initialized for service: {service_name}")
+        if lifespan is Sentinal:
+            self.logger.debug("Using default lifespan function")
+
+        else:
+            self.logger.debug("Custom lifespan function provided")
 
     def create_application(self) -> FastAPI:
         """
@@ -51,11 +64,39 @@ class LifeCycleManager:
             app = lifecycle_manager.create_application()
             ```
         """
-        if self.lifespan is not Sentinal:
-            return FastAPI(lifespan=self.lifespan)
+        self.logger.debug(
+            f"Creating FastAPI application for service: {self.service_name}"
+        )
 
-        @asynccontextmanager
-        async def default_lifespan(app: FastAPI) -> AsyncIterator[None]:
-            yield
+        try:
+            if self.lifespan is Sentinal:
+                self.logger.debug("Using default lifespan function")
 
-        return FastAPI(lifespan=default_lifespan, title=self.service_name)
+                @asynccontextmanager
+                async def default_lifespan(app: FastAPI) -> AsyncIterator[None]:
+                    self.logger.info(
+                        f"Starting application lifecycle for: {self.service_name}"
+                    )
+                    try:
+                        yield
+                    finally:
+                        self.logger.info(
+                            f"Shutting down application lifecycle for: {
+                                self.service_name
+                            }"
+                        )
+
+                app = FastAPI(lifespan=default_lifespan, title=self.service_name)
+
+            else:
+                self.logger.debug("Using custom lifespan function")
+                app = FastAPI(lifespan=self.lifespan)
+
+            self.logger.info(
+                f"FastAPI application created successfully for: {self.service_name}"
+            )
+            return app
+
+        except Exception as exc:
+            self.logger.error(f"Failed to create FastAPI application: {exc}")
+            raise

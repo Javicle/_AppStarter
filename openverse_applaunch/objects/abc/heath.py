@@ -6,8 +6,8 @@ from openverse_applaunch.objects.enum import ServiceStatus
 class BaseHealthResultProtocol(Protocol):
 
     message: str
-    status: ServiceStatus
     details: dict[str, Any]
+    status: ServiceStatus
 
 
 class HealthyResultProtocol(BaseHealthResultProtocol):

@@ -1,15 +1,21 @@
 # noqa: WPS601
+from dataclasses import dataclass
 from typing import Any, AsyncGenerator
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from rich.console import Console
+from rich.table import Table
 
 from openverse_applaunch import ApplicationManager
+from openverse_applaunch.objects.abc.interfaces import (
+    ITableCreator,
+    ITableRender,
+    TableConfigProtocol,
+)
 from openverse_applaunch.objects.abc.service import AbstractTracerService
 from openverse_applaunch.objects.containers import Container
-from openverse_applaunch.objects.enum import ServiceStatus
 from openverse_applaunch.objects.managers.health import HealthManager
 from openverse_applaunch.objects.managers.lifecycle import LifeCycleManager
 from openverse_applaunch.objects.managers.metrics import MetricsManager
@@ -21,12 +27,69 @@ from openverse_applaunch.objects.models.health import HealthCheckResult, Healthy
 from tests.constants import TEST_SERVICE_NAME
 
 
+class MockTableCreator(ITableCreator):
+    def __init__(self):
+        self.called_with_config = None
+
+    def create_table(self, table_config: TableConfigProtocol) -> Table:
+        self.called_with_config = table_config
+        mock_table = Table(
+            title="Mock Table",
+            show_header=True,
+            title_style="bold red",
+            border_style="blue",
+            header_style="italic",
+        )
+        mock_table.add_column("Mock Column 1")
+        mock_table.add_column("Mock Column 2")
+        return mock_table
+
+
+@dataclass
+class MockTableConfig(TableConfigProtocol):
+    title: str = "Test Title"
+    title_style: str = "bold"
+    show_header: bool = True
+    header_style: str = "underline"
+    show_border: bool = True
+    border_style: str = "green"
+    padding: int = 1
+    expand: bool = False
+
+
+class MockTableRender(ITableRender):
+    def __init__(self):
+        self.last_populate_args = None
+        self.last_populate_kwargs = None
+
+    def populate_table(self, table: Table, *args: Any, **kwargs: Any) -> Table:
+        self.last_populate_args = args
+        self.last_populate_kwargs = kwargs
+        table.add_row("mock_key", "mock_value")
+        return table
+
+
 @pytest.fixture
 def test_config() -> dict[str, Any]:
     return {
         "service_name": "test",
         "version": 0.1,
     }
+
+
+@pytest.fixture
+def mock_render() -> MockTableRender:
+    return MockTableRender()
+
+
+@pytest.fixture
+def mock_creator() -> MockTableCreator:
+    return MockTableCreator()
+
+
+@pytest.fixture
+def mock_config() -> MockTableConfig:
+    return MockTableConfig()
 
 
 class MockTestService(AbstractTracerService[HealthCheckResult]):
@@ -42,16 +105,15 @@ class MockTestService(AbstractTracerService[HealthCheckResult]):
     async def health_check(self, *args: Any, **kwargs: Any) -> HealthCheckResult:
         return HealthyResult(
             service_name="test",
-            status=ServiceStatus.HEALTHY,
             message="Most tracer is healthy",
-            response_time=0.0,
+            response_time=0
         )
 
 
 @pytest.fixture(autouse=False)
 def container() -> Container:
-    container_ = Container()
-    container_.config.from_dict(
+    _container = Container()
+    _container.config.from_dict(
         {
             "service_name": TEST_SERVICE_NAME,
             "environment": "testing",
@@ -59,28 +121,27 @@ def container() -> Container:
             "port": "8000",
         }
     )
-    container_.wire(modules=["openverse_applaunch.main", "tests.test_application",
+    _container.wire(modules=["openverse_applaunch.main", "tests.test_application",
                              "openverse_applaunch.objects.managers.table.registry"])
 
-    container_.utils_manager.override(UtilsManager())
-    container_.storage.override(StorageVars())
-    container_.console.override(Console(record=True))  # type: ignore
-    container_.metrics_manager.override(
-        MetricsManager(console=container_.console())
+    _container.utils_manager.override(UtilsManager())
+    _container.storage.override(StorageVars())
+    _container.console.override(Console(record=True))  # type: ignore
+    _container.metrics_manager.override(
+        MetricsManager(console=_container.console())
     )  # type: ignore
-    container_.tracer_manager.override(TracerManager())  # type: ignore
-    container_.health_manager.override(HealthManager())  # type: ignore
-    container_.table_manager.override(  # type: ignore
+    _container.tracer_manager.override(TracerManager())  # type: ignore
+    _container.health_manager.override(HealthManager())  # type: ignore
+    _container.table_manager.override(  # type: ignore
         TableManager(
-            service_name=TEST_SERVICE_NAME,
-            console=container_.console(),
-            utils_manager=container_.utils_manager()
+            console=_container.console(),
+            utils_manager=_container.utils_manager()
         )
     )
-    container_.lifecycle_manager.override(  # type: ignore
+    _container.lifecycle_manager.override(  # type: ignore
         LifeCycleManager(service_name=TEST_SERVICE_NAME)
     )
-    return container_
+    return _container
 
 
 @pytest.fixture

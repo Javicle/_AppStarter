@@ -45,4 +45,3 @@ class Container(containers.DeclarativeContainer):
     )
 
     storage = providers.Singleton(StorageVars)
-

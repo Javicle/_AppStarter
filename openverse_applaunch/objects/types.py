@@ -14,4 +14,3 @@ TService = TypeVar("TService", bound=SomeAbstractServiceType)
 TSorH = TypeVar('TSorH', bound=HealthResultProtocolType | SomeAbstractServiceType)
 
 Sentinal: Any = object()
-
